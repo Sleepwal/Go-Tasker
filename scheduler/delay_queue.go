@@ -1,7 +1,6 @@
 package scheduler
 
 import (
-	"container/heap"
 	"time"
 )
 
