@@ -3,7 +3,7 @@ package storage
 import (
 	"time"
 
-	"github.com/yourusername/go-tasker/scheduler"
+	"github.com/SleepWalker/go-tasker/scheduler"
 )
 
 type Storage interface {

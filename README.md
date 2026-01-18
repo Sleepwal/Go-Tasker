@@ -13,7 +13,7 @@ Go Tasker is a lightweight, high-performance task scheduling framework in Go, su
 ## Installation
 
 ```bash
-go get github.com/yourusername/go-tasker
+go get github.com/SleepWalker/go-tasker
 ```
 
 ## Quick Start
@@ -26,7 +26,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/yourusername/go-tasker/scheduler"
+	"github.com/SleepWalker/go-tasker/scheduler"
 )
 
 type PrintJob struct{}

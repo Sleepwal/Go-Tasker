@@ -1,3 +1,3 @@
-module github.com/yourusername/go-tasker
+module github.com/SleepWalker/go-tasker
 
 go 1.25.4
