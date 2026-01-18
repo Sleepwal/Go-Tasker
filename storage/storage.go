@@ -3,11 +3,11 @@ package storage
 import (
 	"time"
 
-	"github.com/SleepWalker/go-tasker/scheduler"
+	"github.com/SleepWalker/go-tasker/job"
 )
 
 type Storage interface {
-	Save(job scheduler.Job, runAt time.Time) error
+	Save(j job.Job, runAt time.Time) error
 	Delete(jobID string) error
-	ListReady(now time.Time) ([]scheduler.Job, error)
+	ListReady(now time.Time) ([]job.Job, error)
 }
