@@ -1,8 +1,5 @@
 package scheduler
 
-import "context"
+import "github.com/SleepWalker/go-tasker/job"
 
-type Job interface {
-	ID() string
-	Run(ctx context.Context) error
-}
+type Job = job.Job

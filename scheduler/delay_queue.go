@@ -1,11 +1,14 @@
 package scheduler
 
 import (
+	"container/heap"
 	"time"
+
+	"github.com/SleepWalker/go-tasker/job"
 )
 
 type item struct {
-	job   Job
+	job   job.Job
 	runAt time.Time
 }
 
@@ -33,4 +36,8 @@ func (dq *delayQueue) Pop() interface{} {
 	it := old[n-1]
 	*dq = old[:n-1]
 	return it
+}
+
+func (dq *delayQueue) Init() {
+	heap.Init(dq)
 }
