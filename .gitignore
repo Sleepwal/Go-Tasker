@@ -1,0 +1,33 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+tasker
+
+# Test coverage
+*.out
+coverage.out
+*.coverprofile
+
+# Dependency directories
+vendor/
+
+# OpenCode AI
+.opencode/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db

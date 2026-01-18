@@ -1,0 +1,22 @@
+linters:
+  enable:
+    - gofmt
+    - govet
+    - staticcheck
+    - unused
+    - gosimple
+    - ineffassign
+    - deadcode
+    - varcheck
+    - structcheck
+    - errcheck
+
+linters-settings:
+  govet:
+    check-shadowing: true
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+
+run:
+  timeout: 5m
