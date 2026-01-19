@@ -12,12 +12,14 @@ type WorkerPool struct {
 	workers int
 	jobCh   chan job.Job
 	wg      sync.WaitGroup
+	retry   *Retry
 }
 
 func NewWorkerPool(workers int) *WorkerPool {
 	return &WorkerPool{
 		workers: workers,
 		jobCh:   make(chan job.Job),
+		retry:   NewRetry(),
 	}
 }
 
@@ -47,6 +49,50 @@ func (wp *WorkerPool) Start(ctx context.Context) {
 
 func (wp *WorkerPool) Submit(j job.Job) {
 	wp.jobCh <- j
+}
+
+func (wp *WorkerPool) SubmitWithRetry(ctx context.Context, j job.Job, policy RetryPolicy) error {
+	return wp.retry.Retry(ctx, j, func(ctx context.Context) error {
+		errCh := make(chan error, 1)
+
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case wp.jobCh <- j:
+		}
+
+		go func() {
+			errCh <- j.Run(ctx)
+		}()
+
+		select {
+		case err := <-errCh:
+			return err
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}, policy)
+}
+
+func (wp *WorkerPool) SubmitSync(ctx context.Context, j job.Job) error {
+	errCh := make(chan error, 1)
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case wp.jobCh <- j:
+	}
+
+	go func() {
+		errCh <- j.Run(ctx)
+	}()
+
+	select {
+	case err := <-errCh:
+		return err
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }
 
 func (wp *WorkerPool) Stop() {

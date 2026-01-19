@@ -16,15 +16,18 @@ type Scheduler interface {
 	Stop()
 	Schedule(j job.Job, runAt time.Time)
 	ScheduleAfter(j job.Job, delay time.Duration)
+	ScheduleWithRetry(j job.Job, runAt time.Time, policy RetryPolicy)
 }
 
 type schedulerImpl struct {
-	ctx     context.Context
-	cancel  context.CancelFunc
-	pool    *WorkerPool
-	queue   delayQueue
-	storage storage.Storage
-	mu      sync.RWMutex
+	ctx          context.Context
+	cancel       context.CancelFunc
+	pool         *WorkerPool
+	queue        delayQueue
+	storage      storage.Storage
+	mu           sync.RWMutex
+	retryPolicy  RetryPolicy
+	retryEnabled bool
 }
 
 func NewScheduler(workers int) Scheduler {
@@ -32,11 +35,13 @@ func NewScheduler(workers int) Scheduler {
 	q := delayQueue{}
 	q.Init()
 	return &schedulerImpl{
-		ctx:     ctx,
-		cancel:  cancel,
-		pool:    NewWorkerPool(workers),
-		queue:   q,
-		storage: storage.NewMemoryStorage(),
+		ctx:          ctx,
+		cancel:       cancel,
+		pool:         NewWorkerPool(workers),
+		queue:        q,
+		storage:      storage.NewMemoryStorage(),
+		retryPolicy:  DefaultRetryPolicy(),
+		retryEnabled: false,
 	}
 }
 
@@ -67,6 +72,14 @@ func (s *schedulerImpl) ScheduleAfter(j job.Job, delay time.Duration) {
 	s.Schedule(j, runAt)
 }
 
+func (s *schedulerImpl) ScheduleWithRetry(j job.Job, runAt time.Time, policy RetryPolicy) {
+	s.mu.Lock()
+	s.retryPolicy = policy
+	s.retryEnabled = true
+	s.mu.Unlock()
+	s.Schedule(j, runAt)
+}
+
 func (s *schedulerImpl) loop() {
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
@@ -87,9 +100,18 @@ func (s *schedulerImpl) loop() {
 				if s.queue.Len() > 0 && s.queue[0].job.ID() == j.ID() {
 					heap.Pop(&s.queue)
 				}
+				retryEnabled := s.retryEnabled
+				retryPolicy := s.retryPolicy
 				s.mu.Unlock()
 
-				s.pool.Submit(j)
+				if retryEnabled {
+					err := s.pool.SubmitWithRetry(s.ctx, j, retryPolicy)
+					if err != nil {
+						log.Printf("job %s failed with retry: %v", j.ID(), err)
+					}
+				} else {
+					s.pool.Submit(j)
+				}
 			}
 		}
 	}
