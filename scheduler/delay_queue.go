@@ -7,11 +7,13 @@ import (
 	"github.com/SleepWalker/go-tasker/job"
 )
 
+// item 表示队列中的任务项，包含任务和执行时间
 type item struct {
 	job   job.Job
 	runAt time.Time
 }
 
+// delayQueue 延迟队列，使用堆实现，按执行时间排序
 type delayQueue []*item
 
 func (dq delayQueue) Len() int {
