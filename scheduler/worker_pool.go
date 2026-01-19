@@ -8,6 +8,7 @@ import (
 	"github.com/SleepWalker/go-tasker/job"
 )
 
+// WorkerPool 管理 goroutine 池，用于并发执行任务
 type WorkerPool struct {
 	workers int
 	jobCh   chan job.Job
@@ -15,6 +16,7 @@ type WorkerPool struct {
 	retry   *Retry
 }
 
+// NewWorkerPool 创建指定数量的 worker 池
 func NewWorkerPool(workers int) *WorkerPool {
 	return &WorkerPool{
 		workers: workers,
@@ -23,6 +25,7 @@ func NewWorkerPool(workers int) *WorkerPool {
 	}
 }
 
+// Start 启动所有 worker goroutine
 func (wp *WorkerPool) Start(ctx context.Context) {
 	for i := 0; i < wp.workers; i++ {
 		wp.wg.Add(1)
@@ -47,10 +50,12 @@ func (wp *WorkerPool) Start(ctx context.Context) {
 	}
 }
 
+// Submit 提交任务到 worker 池（无重试）
 func (wp *WorkerPool) Submit(j job.Job) {
 	wp.jobCh <- j
 }
 
+// SubmitWithRetry 提交任务并执行重试策略
 func (wp *WorkerPool) SubmitWithRetry(ctx context.Context, j job.Job, policy RetryPolicy) error {
 	return wp.retry.Retry(ctx, j, func(ctx context.Context) error {
 		errCh := make(chan error, 1)
@@ -74,6 +79,7 @@ func (wp *WorkerPool) SubmitWithRetry(ctx context.Context, j job.Job, policy Ret
 	}, policy)
 }
 
+// SubmitSync 同步提交任务并等待执行结果
 func (wp *WorkerPool) SubmitSync(ctx context.Context, j job.Job) error {
 	errCh := make(chan error, 1)
 
@@ -95,6 +101,7 @@ func (wp *WorkerPool) SubmitSync(ctx context.Context, j job.Job) error {
 	}
 }
 
+// Stop 优雅关闭 worker 池
 func (wp *WorkerPool) Stop() {
 	close(wp.jobCh)
 	wp.wg.Wait()
